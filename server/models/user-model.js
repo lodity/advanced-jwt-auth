@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 const UserSchema = new Schema({
 	email: { type: String, unique: true, required: true },
@@ -6,5 +6,4 @@ const UserSchema = new Schema({
 	isActivated: { type: Boolean, default: false },
 	activationLink: { type: String },
 });
-// TODO fix export
-export default model('User', UserSchema);
+export default mongoose.model('User', UserSchema);
