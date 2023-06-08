@@ -2,7 +2,7 @@ import 'dotenv/config';
 import UserModel from '../models/user-model.js';
 import bcrypt from 'bcrypt';
 import mailService from './mail-service.js';
-import tokenService from './token-service.js';
+import TokenService from './token-service.js';
 import UserDto from '../dto/user-dto.js';
 import { v4 } from 'uuid';
 import ApiError from '../exceptions/api-error.js';
@@ -29,8 +29,8 @@ class UserService {
 		);
 
 		const userDto = new UserDto(user);
-		const tokens = tokenService.generateTokens({ ...userDto });
-		await tokenService.saveToken(userDto.id, tokens.refreshToken);
+		const tokens = TokenService.generateTokens({ ...userDto });
+		await TokenService.saveToken(userDto.id, tokens.refreshToken);
 
 		return { ...tokens, user: userDto };
 	}
@@ -57,14 +57,31 @@ class UserService {
 		}
 
 		const userDto = new UserDto(user);
-		const tokens = tokenService.generateTokens({ ...userDto });
-		await tokenService.saveToken(userDto.id, tokens.refreshToken);
+		const tokens = TokenService.generateTokens({ ...userDto });
+		await TokenService.saveToken(userDto.id, tokens.refreshToken);
 
 		return { ...tokens, user: userDto };
 	}
 	async logout(refreshToken) {
-		const token = await tokenService.removeToken(refreshToken);
+		const token = await TokenService.removeToken(refreshToken);
 		return token;
+	}
+	async refresh(refreshToken) {
+		if (!refreshToken) {
+			throw ApiError.UnauthorizedError();
+		}
+		const userData = TokenService.validateRefreshToken(refreshToken);
+		const tokenFromDb = await TokenService.findToken(refreshToken);
+		if (!userData || !tokenFromDb) {
+			throw ApiError.UnauthorizedError();
+		}
+
+		const user = await UserModel.findById(userData.id);
+		const userDto = new UserDto(user);
+		const tokens = TokenService.generateTokens({ ...userDto });
+		await TokenService.saveToken(userDto.id, tokens.refreshToken);
+
+		return { ...tokens, user: userDto };
 	}
 }
 
