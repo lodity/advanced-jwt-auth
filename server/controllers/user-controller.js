@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import userService from '../service/user-service.js';
 import { cookie, validationResult } from 'express-validator';
 import ApiError from '../exceptions/api-error.js';
 import UserService from '../service/user-service.js';
@@ -14,7 +13,7 @@ class UserController {
 				);
 			}
 			const { email, password } = req.body;
-			const userData = await userService.registration(email, password);
+			const userData = await UserService.registration(email, password);
 			res.cookie('refreshToken', userData.refreshToken, {
 				maxAge: 7 * 24 * 60 * 60 * 1000,
 				httpOnly: true,
@@ -50,7 +49,7 @@ class UserController {
 	async activate(req, res, next) {
 		try {
 			const activationLink = req.params.link;
-			await userService.activate(activationLink);
+			await UserService.activate(activationLink);
 			return res.redirect(process.env.CLIENT_URL);
 		} catch (e) {
 			next(e);
@@ -71,7 +70,8 @@ class UserController {
 	}
 	async getUsers(req, res, next) {
 		try {
-			res.json(['123', '456']);
+			const users = await UserService.getAllUsers();
+			return res.json(users);
 		} catch (e) {
 			next(e);
 		}
