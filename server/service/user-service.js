@@ -5,12 +5,15 @@ import mailService from './mail-service.js';
 import tokenService from './token-service.js';
 import UserDto from '../dto/user-dto.js';
 import { v4 } from 'uuid';
+import ApiError from '../exceptions/api-error.js';
 
 class UserService {
 	async registration(email, password) {
 		const candidate = await UserModel.findOne({ email });
 		if (candidate) {
-			throw new Error(`User with email address ${email} already exist`);
+			throw ApiError.BadRequest(
+				`User with email address ${email} already exist`
+			);
 		}
 		const hashPassword = await bcrypt.hash(password, 3);
 		const activationLink = v4();
@@ -34,7 +37,7 @@ class UserService {
 	async activate(activationLink) {
 		const user = await UserModel.findOne({ activationLink });
 		if (!user) {
-			throw new Error('Incorrect activation link');
+			throw ApiError.BadRequest('Incorrect activation link');
 		}
 		user.isActivated = true;
 		await user.save();
